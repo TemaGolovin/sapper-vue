@@ -22,7 +22,7 @@ export default (columns) => {
   }
   if (widthView < 480) {
     if (columns >= 25) {
-      document.body.style.setProperty('--width-cell', '20px');
+      document.body.style.setProperty('--width-cell', '17px');
       document.body.style.setProperty('--border-collapse', 'collapse');
       document.body.style.setProperty('--border-cell', '1px solid rgb(107, 214, 179)');
       document.body.style.setProperty('--outline-open', '1px solid rgb(107, 214, 179)');
