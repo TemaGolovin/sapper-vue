@@ -2,7 +2,7 @@
 
 ### Description:
 
-Classic minesweeper game with selectable difficulty. There are 3 difficulty modes: Easy, Medium, Hard, each of them differs in the number of bombs, the number of cells, and the time to complete the game. It is possible to put a checkbox or a question on a closed cell. Implemented such a generation of mines that it was impossible to lose on the first move. There is a leaderboard for the top 10 scores for each difficulty level. You can win by putting flags on all bombs, or you can open all fields without bombs. In the near future, it is planned to add a custom mode and handle large mouse buttons.
+Classic minesweeper game with selectable difficulty. There are 3 difficulty modes: Easy, Medium, Hard, each of them differs in the number of bombs, the number of cells, and the time to complete the game. It is possible to put a checkbox or a question on a closed cell. Implemented such a generation of mines that it was impossible to lose on the first move. There is a leaderboard for the top 10 scores for each difficulty level. You can win by putting flags on all bombs, or you can open all fields without bombs. Added custom mode. In the near future, it is planned to add a handle large mouse buttons.
 
 ### Installation
 
