@@ -3,6 +3,7 @@
     <router-link to="/">Игра</router-link>
     <router-link to="/leaderboard">Таблицы лидеров</router-link>
   </nav>
+  <header class="header">Сапер</header>
   <router-view />
 </template>
 
@@ -38,6 +39,12 @@ nav {
   margin: auto;
   justify-content: space-around;
   font-size: 20px;
+}
+
+.header {
+  font-size: 30px;
+  margin-bottom: 5px;
+  font-weight: 600;
 }
 
 nav a {
