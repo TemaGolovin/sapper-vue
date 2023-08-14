@@ -1,24 +1,49 @@
-# sapper
+# Sapper game
 
-## Project setup
+### Description:
+
+Classic minesweeper game with selectable difficulty. There are 3 difficulty modes: Easy, Medium, Hard, each of them differs in the number of bombs, the number of cells, and the time to complete the game. It is possible to put a checkbox or a question on a closed cell. Implemented such a generation of mines that it was impossible to lose on the first move. There is a leaderboard for the top 10 scores for each difficulty level. You can win by putting flags on all bombs, or you can open all fields without bombs. In the near future, it is planned to add a custom mode and handle large mouse buttons.
+
+### Installation
+
+1. Clone the repository
+
 ```
-npm install
+$ git clone <link>
 ```
 
-### Compiles and hot-reloads for development
+2. Change the working directory:
+
 ```
-npm run serve
+$ cd sapper-vue
+```
+
+3. Install dependencies:
+
+```
+$ make install
+```
+
+4. Start app
+
+```
+$ make start
 ```
 
 ### Compiles and minifies for production
+
 ```
-npm run build
+$ make build
 ```
 
 ### Lints and fixes files
+
 ```
-npm run lint
+$ make lint
 ```
 
 ### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+
+# Demo
+
+---

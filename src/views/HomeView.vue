@@ -1,15 +1,15 @@
 <template>
   <div class="home">
-    <button
-      type="button"
-      class="btn btn-setting btn-green mb-4"
-      data-bs-toggle="modal"
-      data-bs-target="#setting-modal"
-      :style="`width: ${columns * 34 + 16 * 2}px`"
-    >
-      Настройки игры
-    </button>
-
+    <div class="wrapper-setting-btn" :style="`max-width: ${columns * 34 + 16 * 2}px`">
+      <button
+        type="button"
+        class="btn btn-setting btn-green mb-4"
+        data-bs-toggle="modal"
+        data-bs-target="#setting-modal"
+      >
+        Настройки игры
+      </button>
+    </div>
     <!-- Modal -->
     <div
       class="modal fade"
@@ -30,15 +30,29 @@
             ></button>
           </div>
           <div class="modal-body">
+            <div class="mb-3">
+              <label for="nick" class="form-control"
+                >Никнейм
+                <input
+                  v-model="this.nick"
+                  type="text"
+                  class="form-control"
+                  id="nick"
+                  placeholder="Введите ваш никнейм"
+                />
+              </label>
+            </div>
             <select
               class="form-select"
               aria-label="Default select example"
               @change="hendleChangeLevel"
             >
-              <option selected>Уровень сложности</option>
-              <option value="easy">Легкий (Поле: 8х8, Время: 10 минут)</option>
-              <option value="middle">Средний (Поле: 16х16, Время: 40 минут)</option>
-              <option value="hard">Сложный (Поле: 32х16, Время: 100 минут)</option>
+              <option selected id="selected">Уровень сложности</option>
+              <option value="easy" id="select-easy">Легкий (Поле: 8х8, Время: 10 минут)</option>
+              <option value="middle" id="select-middle">
+                Средний (Поле: 16х16, Время: 40 минут)
+              </option>
+              <option value="hard" id="select-hard">Сложный (Поле: 32х16, Время: 100 минут)</option>
             </select>
           </div>
           <div class="modal-footer">
@@ -64,16 +78,19 @@
       :time="time"
       :key="this.updateKey"
       :hendleSaveSetting="hendleSaveSetting"
+      :nick="nick"
       @changeState="getGameState($event)"
       @changeBomb="getGameState($event)"
+      @changeTime="changeTime($event)"
+      @onresize="setAdaptiv"
     />
   </div>
 </template>
 
 <script>
-import 'bootstrap/dist/css/bootstrap.min.css';
-import 'bootstrap';
+import { mapActions } from 'vuex';
 import GameField from '@/components/GameField.vue';
+import setAdaptive from '../helpers/setAdaptive';
 
 export default {
   name: 'HomeView',
@@ -82,41 +99,50 @@ export default {
   },
   data() {
     return {
-      columns: 16,
-      rows: 16,
-      time: 2400000,
-      bombs: 40,
-      level: 'middle',
+      columns: 8,
+      rows: 8,
+      time: 600,
+      bombs: 10,
+      level: 'easy',
       gameState: 'init',
       updateKey: 0,
+      nick: '',
     };
   },
   methods: {
+    ...mapActions(['getLeadersFromLocalStore']),
+
     hendleSaveSetting() {
       this.updateKey += 1;
       this.gameState = 'init';
+
       switch (this.level) {
         case 'easy':
           this.columns = 8;
           this.rows = 8;
-          this.time = 600000;
+          this.time = 600;
           this.bombs = 10;
           break;
         case 'middle':
           this.columns = 16;
           this.rows = 16;
-          this.time = 2400000;
+          this.time = 2400;
           this.bombs = 40;
           break;
         case 'hard':
-          this.columns = 32;
-          this.rows = 16;
-          this.time = 6000000;
-          this.bombs = 100;
+          this.columns = 16;
+          this.rows = 32;
+          this.time = 6000;
+          this.bombs = 90;
+
           break;
         default:
           break;
       }
+      this.setAdaptiv();
+    },
+    setAdaptiv() {
+      setAdaptive(this.columns);
     },
     hendleChangeLevel(event) {
       event.preventDefault();
@@ -124,12 +150,45 @@ export default {
     },
     getGameState(data) {
       this.gameState = data;
+      if (data === 'victory') {
+        let { nick } = this;
+        const { time } = this;
+        nick = nick === '' ? 'Гость' : nick;
+        if (this.level === 'easy') {
+          const leadersEasy = JSON.parse(localStorage.getItem('leadersEasy')) || [];
+          const victoryTime = 600 - time;
+          leadersEasy.push({ nick, victoryTime });
+          localStorage.setItem('leadersEasy', JSON.stringify(leadersEasy));
+          this.getLeadersFromLocalStore();
+        }
+        if (this.level === 'middle') {
+          const leadersMiddle = JSON.parse(localStorage.getItem('leadersMiddle')) || [];
+          const victoryTime = 2400 - time;
+          leadersMiddle.push({ nick, victoryTime });
+          localStorage.setItem('leadersMiddle', JSON.stringify(leadersMiddle));
+          this.getLeadersFromLocalStore();
+        }
+        if (this.level === 'hard') {
+          const leadersHard = JSON.parse(localStorage.getItem('leadersHard')) || [];
+          const victoryTime = 6000 - time;
+          leadersHard.push({ nick, victoryTime });
+          localStorage.setItem('leadersHard', JSON.stringify(leadersHard));
+          this.getLeadersFromLocalStore();
+        }
+      }
+    },
+    changeTime(data) {
+      this.time -= data;
     },
   },
 };
 </script>
 
 <style>
+.home {
+  padding: 0 20px;
+}
+
 .btn-green {
   background-color: rgb(107, 214, 179);
   border: 3px solid #000;
@@ -138,5 +197,31 @@ export default {
 .btn-green:hover {
   background-color: aquamarine;
   border: 3px solid #000;
+}
+
+.btn-setting {
+  flex: 1;
+}
+
+.wrapper-setting-btn {
+  display: flex;
+  margin: auto;
+}
+
+@media (max-width: 480px) {
+  .home {
+    padding: 0;
+    font-size: 16px;
+  }
+
+  .form-select {
+    font-size: 12px;
+  }
+  #select-middle,
+  #select-easy,
+  #select-hard,
+  #selected {
+    font-size: 12px;
+  }
 }
 </style>

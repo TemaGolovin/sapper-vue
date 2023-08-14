@@ -1,51 +1,63 @@
 <template>
-  <div class="game-field">
-    <table @contextmenu="this.hendleTbodyRight">
-      <thead class="thead">
-        <tr>
-          <th :colspan="columns / 2.66666">
-            <div class="thead-item counter">{{ this.bombs - this.flags }}</div>
-          </th>
-          <th :colspan="columns / 4" @click="hendleReset">
-            <div class="thead-item reset"></div>
-          </th>
-          <th :colspan="columns / 2.66666">
-            <div class="thead-item timer">{{ this.millisecInMin() }}</div>
-          </th>
-        </tr>
-      </thead>
-      <tbody class="tbody" :key="resetKey">
-        <tr :class="`row-table`" v-for="row in rows" :key="row">
-          <td
-            class="col-table"
-            :id="`${row}_${column}`"
-            v-for="column in columns"
-            :key="column"
-            :class="{
-              open: this.map[`${row}_${column}`]?.isOpen,
-              bomb: this.map[`${row}_${column}`]?.isOpen && this.map[`${row}_${column}`]?.isBomb,
-            }"
-          >
-            <div
-              class="img"
-              @click="this.hendleClick"
-              @contextmenu="this.hendleClickRight"
-              @stateGameCahnge="gameOver"
+  <div>
+    <p class="result-game" v-if="this.gameState === 'victory' || this.gameState === 'gameOver'">
+      {{ this.resulText }}
+    </p>
+    <div class="game-field">
+      <table class="table-field" @contextmenu="this.hendleTbodyRight">
+        <thead class="thead">
+          <tr>
+            <th :colspan="columns / 2.66666">
+              <div class="thead-item counter">{{ this.bombs - this.flags }}</div>
+            </th>
+            <th :colspan="columns / 4" @click="hendleReset">
+              <div class="thead-item reset"></div>
+            </th>
+            <th :colspan="columns / 2.66666">
+              <div class="thead-item timer">{{ this.secInMin(this.time) }}</div>
+            </th>
+          </tr>
+        </thead>
+        <tbody class="tbody" :key="resetKey">
+          <tr :class="`row-table`" v-for="row in rows" :key="row">
+            <td
+              class="col-table"
+              :id="`${row}_${column}`"
+              v-for="column in columns"
+              :key="column"
+              :class="{
+                open: this.map[`${row}_${column}`]?.isOpen,
+                bomb: this.map[`${row}_${column}`]?.isOpen && this.map[`${row}_${column}`]?.isBomb,
+                flag: this.map[`${row}_${column}`]?.flag && !this.map[`${row}_${column}`]?.isOpen,
+                question: this.map[`${row}_${column}`]?.question,
+                defused:
+                  this.map[`${row}_${column}`]?.flag &&
+                  this.map[`${row}_${column}`]?.isBomb &&
+                  this.map[`${row}_${column}`]?.isOpen,
+              }"
             >
               <div
-                v-if="
-                  this.map[`${row}_${column}`]?.aroundBombs &&
-                  this.map[`${row}_${column}`]?.aroundBombs !== 0
-                "
-                class="content"
+                class="img"
+                @click="this.hendleClick"
+                @contextmenu="this.hendleClickRight"
+                @stateGameCahnge="gameOver"
               >
-                {{ this.map[`${row}_${column}`].aroundBombs }}
+                <div
+                  v-if="
+                    this.map[`${row}_${column}`]?.aroundBombs &&
+                    this.map[`${row}_${column}`]?.aroundBombs !== 0
+                  "
+                  class="content"
+                  :class="this.classOnNumBomb(this.map[`${row}_${column}`].aroundBombs)"
+                >
+                  {{ this.map[`${row}_${column}`].aroundBombs }}
+                </div>
               </div>
-            </div>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </template>
 
@@ -60,7 +72,9 @@ export default {
       map: {},
       flags: 0,
       resetKey: 0,
-      wathedCells: {},
+      timerId: null,
+      victoryTime: 0,
+      resultText: '',
     };
   },
 
@@ -73,33 +87,57 @@ export default {
       if (this.gameState === 'init') {
         this.map = this.hendleFildFill(parentTarget.id);
         this.$emit('changeState', 'playing');
+        this.downTime();
       }
       const mapCell = this.map[parentTarget.id];
-      if (parentTarget.classList.contains('flag') || this.gameState === 'gameOver') {
+      if (
+        // eslint-disable-next-line
+        mapCell?.flag ||
+        // eslint-disable-next-line
+        this.gameState === 'gameOver' ||
+        // eslint-disable-next-line
+        this.gameState === 'victory' ||
+        mapCell?.question
+      ) {
         return;
       }
 
       if (mapCell?.isBomb) {
-        this.gameOver();
+        this.gameOver('произошел взрыв');
       }
       this.openCells(parentTarget.id);
+      this.victory();
     },
     hendleClickRight(event) {
       event.preventDefault();
       const parentTarget = event.target.parentNode;
-      if (parentTarget.classList.contains('bomb') || this.map[parentTarget.id].isOpen) {
+      if (this.gameState === 'init') {
+        this.map = this.hendleFildFill(parentTarget.id);
+        this.$emit('changeState', 'playing');
+      }
+      const mapCell = this.map[parentTarget.id];
+      if (
+        // eslint-disable-next-line
+        (mapCell?.isBomb && mapCell?.isOpen) ||
+        // eslint-disable-next-line
+        mapCell?.isOpen ||
+        // eslint-disable-next-line
+        this?.gameState === 'gameOver' ||
+        this?.gameState === 'victory'
+      ) {
         return;
       }
-      if (parentTarget.classList.contains('flag')) {
-        parentTarget.classList.remove('flag');
+      if (mapCell.flag) {
+        mapCell.flag = false;
         this.flags -= 1;
-        parentTarget.classList.add('question');
-      } else if (parentTarget.classList.contains('question')) {
-        parentTarget.classList.remove('question');
+        mapCell.question = true;
+      } else if (mapCell.question) {
+        mapCell.question = false;
       } else {
-        parentTarget.classList.add('flag');
+        mapCell.flag = true;
         this.flags += 1;
       }
+      this.victory();
     },
     hendleFildFill(initCell = null) {
       return fillField(this.columns, this.rows, this.bombs, initCell);
@@ -109,22 +147,29 @@ export default {
       this.$emit('initBombs', 'init');
       this.map = {};
       this.resetKey += 1;
-      this.wathedCells = {};
       this.hendleSaveSetting();
     },
-    millisecInMin() {
-      const seconds = this.time / 1000;
+    secInMin(time) {
+      const seconds = time;
       const minutes = Math.floor(seconds / 60);
       const resultMin = minutes >= 10 ? minutes : `0${minutes}`;
       const restSec = seconds % 60;
       const resultRestSec = restSec >= 10 ? restSec : `0${restSec}`;
       return `${resultMin}:${resultRestSec}`;
     },
-    gameOver() {
-      Object.entries(this.map).forEach(([id, params]) => {
-        if (params.isBomb) {
+    gameOver(text) {
+      this.walkField((id) => {
+        if (this.map[id].isBomb) {
           this.map[id].isOpen = true;
         }
+      });
+      this.$emit('changeState', 'gameOver');
+      clearTimeout(this.timerId);
+      this.resulText = `Вы програли: ${text}. Попробуйте снова.`;
+    },
+    walkField(callback) {
+      Object.entries(this.map).forEach(([id]) => {
+        callback(id);
       });
     },
     openCells(cellId) {
@@ -136,7 +181,7 @@ export default {
       }
     },
     setOpenCell(cellId) {
-      if (!this.map[cellId].isOpen) {
+      if (!this.map[cellId].isOpen && !this.map[cellId].flag) {
         this.map[cellId].isOpen = true;
 
         if (!this.map[cellId].isBomb) {
@@ -169,16 +214,91 @@ export default {
         }
       }
     },
+    classOnNumBomb(aroundBombs) {
+      switch (aroundBombs) {
+        case 1:
+          return 'text-primary';
+        case 2:
+          return 'text-success';
+        case 3:
+          return 'text-danger';
+        case 4:
+          return 'dark-blue'; // new class
+        case 5:
+          return 'brown'; // new class
+        case 6:
+          return 'text-info';
+        case 7:
+          return 'text-dark';
+        case 8:
+          return 'text-white';
+        default:
+          break;
+      }
+      return null;
+    },
+    downTime() {
+      if (this.time > 1) {
+        this.timerId = setTimeout(() => {
+          this.victoryTime += 1;
+          this.$emit('changeTime', 1);
+          this.downTime();
+        }, 1000);
+      } else {
+        this.gameOver('время истекло');
+      }
+    },
+    victory() {
+      let openCells = 0;
+      let closedCellsWithBombs = 0;
+      let cellWithFlagAndBomb = 0;
+      const allCells = this.columns * this.rows;
+      this.walkField((id) => {
+        if (this.map[id].isOpen) {
+          openCells += 1;
+        }
+        if (!this.map[id].isOpen && this.map[id].isBomb) {
+          closedCellsWithBombs += 1;
+          if (this.map[id].flag) {
+            cellWithFlagAndBomb += 1;
+          }
+        }
+      });
+      if (
+        // eslint-disable-next-line
+        allCells - openCells === closedCellsWithBombs ||
+        (cellWithFlagAndBomb === this.bombs && this.bombs - this.flags === 0)
+      ) {
+        this.$emit('changeState', 'victory');
+        clearTimeout(this.timerId);
+        this.resulText = `Ура! Вы победили! Ваше время: ${this.secInMin(this.victoryTime)}.`;
+      }
+    },
   },
-  props: ['columns', 'rows', 'bombs', 'gameState', 'time', 'hendleSaveSetting'],
+  props: ['columns', 'rows', 'bombs', 'gameState', 'time', 'hendleSaveSetting', 'nick'],
 };
 </script>
 
 <style>
-table {
+:root {
+  --width-cell: 32px;
+  --border-collapse: separate;
+  --border-cell: 3px solid rgb(36, 66, 56);
+  --border-cell-top: 3px solid rgb(107, 214, 179);
+  --border-cell-left: 3px solid rgb(107, 214, 179);
+  --outline-open: 2px solid rgb(36, 66, 56);
+}
+
+.result-game {
+  color: red;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.table-field {
   margin: auto;
   border: 4px solid rgb(36, 66, 56);
-  border-collapse: separate;
+  border-collapse: var(--border-collapse);
   background-color: rgb(107, 214, 179);
   border-radius: 10px;
   padding: 0 10px 10px;
@@ -241,11 +361,11 @@ table {
 }
 
 .col-table {
-  border: 3px solid rgb(36, 66, 56);
-  border-top: 3px solid rgb(107, 214, 179);
-  border-left: 3px solid rgb(107, 214, 179);
-  width: 32px;
-  height: 32px;
+  border: var(--border-cell);
+  border-top: var(--border-cell-top);
+  border-left: var(--border-cell-left);
+  width: var(--width-cell);
+  height: var(--width-cell);
   margin: 20px;
   background-color: aquamarine;
   font-weight: 700;
@@ -271,9 +391,9 @@ table {
 }
 
 .open {
-  outline: 2px solid rgb(36, 66, 56);
+  outline: var(--outline-open);
   border: none;
-  background-color: aquamarine;
+  background-color: rgb(159, 255, 223);
 }
 
 .img {
@@ -283,5 +403,29 @@ table {
 
 .content {
   padding-top: 5px;
+}
+
+.dark-blue {
+  color: darkblue;
+}
+
+.brown {
+  color: brown;
+}
+
+.defused {
+  background: url('../assets/defused.png') no-repeat;
+  background-size: cover;
+  background-color: rgb(159, 255, 223);
+}
+
+@media (max-width: 480px) {
+  .table-field {
+    font-size: 12px;
+  }
+  .thead-item {
+    font-size: 14px;
+    padding-top: 7px;
+  }
 }
 </style>

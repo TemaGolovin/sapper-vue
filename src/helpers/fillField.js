@@ -18,8 +18,9 @@ const chageBombInitCell = (map, initCell, amountCell, cols) => {
   const initCellMap = map[initCell];
   if (tergetMap.isBomb) {
     chageBombInitCell(map, initCell, amountCell, cols);
+  } else {
+    [tergetMap.isBomb, initCellMap.isBomb] = [initCellMap.isBomb, tergetMap.isBomb];
   }
-  [tergetMap.isBomb, initCellMap.isBomb] = [initCellMap.isBomb, tergetMap.isBomb];
 };
 
 const fillField = (columns, rows, bombs, initCell) => {
@@ -33,6 +34,7 @@ const fillField = (columns, rows, bombs, initCell) => {
         aroundBombs: null,
         isOpen: false,
         flag: false,
+        question: false,
       };
       currentBombs -= 1;
     }
