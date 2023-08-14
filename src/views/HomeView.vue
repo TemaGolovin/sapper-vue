@@ -43,7 +43,7 @@
               </label>
             </div>
             <select
-              class="form-select"
+              class="form-select mb-3"
               aria-label="Default select example"
               @change="hendleChangeLevel"
             >
@@ -53,7 +53,57 @@
                 Средний (Поле: 16х16, Время: 40 минут)
               </option>
               <option value="hard" id="select-hard">Сложный (Поле: 32х16, Время: 100 минут)</option>
+              <option value="castom">Свой режим</option>
             </select>
+            <div class="castom-setting-group" v-if="this.level === 'castom'">
+              <div class="row castom-setting mb-3">
+                <div class="col">
+                  <input
+                    type="number"
+                    class="form-control"
+                    placeholder="Ячеек в ширину"
+                    aria-label="Cell number in width"
+                    v-model="this.castom.columns"
+                  />
+                </div>
+                <div class="col">
+                  <input
+                    type="number"
+                    class="form-control"
+                    placeholder="Ячеек в высоту"
+                    aria-label="Cell number in heigth"
+                    v-model="this.castom.rows"
+                  />
+                </div>
+                <p v-if="this.disabledButtonCell()" class="text-danger">
+                  Количество ячеек должно быть от 8 до 32.
+                </p>
+              </div>
+
+              <div class="row castom-setting">
+                <div class="col">
+                  <input
+                    type="number"
+                    class="form-control"
+                    placeholder="Кол-во бомб"
+                    aria-label="bombs"
+                    v-model="this.castom.bombs"
+                  />
+                </div>
+                <div class="col">
+                  <input
+                    type="number"
+                    class="form-control"
+                    placeholder="Время в секундах"
+                    aria-label="time"
+                    v-model="this.castom.time"
+                  />
+                </div>
+              </div>
+              <p v-if="this.disabledButtonBombOrTime()" class="text-danger">
+                Бомб должно быть больше 0 и меньше количества ячеек, время от 10 до 6000 секунд
+              </p>
+            </div>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
@@ -63,6 +113,9 @@
               @click="hendleSaveSetting"
               data-bs-dismiss="modal"
               aria-label="Close"
+              :disabled="
+                (disabledButtonCell() || disabledButtonBombOrTime()) && this.level === 'castom'
+              "
             >
               Сохронить
             </button>
@@ -82,7 +135,6 @@
       @changeState="getGameState($event)"
       @changeBomb="getGameState($event)"
       @changeTime="changeTime($event)"
-      @onresize="setAdaptiv"
     />
   </div>
 </template>
@@ -107,8 +159,15 @@ export default {
       gameState: 'init',
       updateKey: 0,
       nick: '',
+      castom: {
+        columns: '',
+        rows: '',
+        time: '',
+        bombs: '',
+      },
     };
   },
+
   methods: {
     ...mapActions(['getLeadersFromLocalStore']),
 
@@ -134,13 +193,33 @@ export default {
           this.rows = 32;
           this.time = 6000;
           this.bombs = 90;
-
+          break;
+        case 'castom':
+          this.columns = this.castom.columns;
+          this.rows = this.castom.rows;
+          this.time = this.castom.time;
+          this.bombs = this.castom.bombs;
           break;
         default:
           break;
       }
       this.setAdaptiv();
     },
+
+    disabledButtonCell() {
+      const isColumnsNormal = this.castom.columns < 8 || this.castom.columns > 32;
+      const isRowNormal = this.castom.rows < 8 || this.castom.rows > 32;
+      return isColumnsNormal || isRowNormal;
+    },
+
+    disabledButtonBombOrTime() {
+      // eslint-disable-next-line
+      const isBombsNormal =
+        this.castom.bombs < 0 || this.castom.bombs > this.castom.columns * this.castom.rows;
+      const isTimeNormal = this.castom.time < 10 || this.castom.time > 6000;
+      return isBombsNormal || isTimeNormal;
+    },
+
     setAdaptiv() {
       setAdaptive(this.columns);
     },
@@ -222,6 +301,10 @@ export default {
   #select-hard,
   #selected {
     font-size: 12px;
+  }
+
+  .castom-setting {
+    margin: 10px 0;
   }
 }
 </style>
