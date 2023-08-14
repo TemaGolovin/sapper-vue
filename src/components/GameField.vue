@@ -7,14 +7,13 @@
       <table class="table-field" @contextmenu="this.hendleTbodyRight">
         <thead class="thead">
           <tr>
-            <th :colspan="columns / 2.66666">
-              <div class="thead-item counter">{{ this.bombs - this.flags }}</div>
-            </th>
-            <th :colspan="columns / 4" @click="hendleReset">
-              <div class="thead-item reset"></div>
-            </th>
-            <th :colspan="columns / 2.66666">
-              <div class="thead-item timer">{{ this.secInMin(this.time) }}</div>
+            <th :colspan="columns" class="thead-items">
+              <div class="thead-wrapper">
+                <div class="thead-item counter">{{ this.bombs - this.flags }}</div>
+                <!--eslint-disable-next-line-->
+                <div class="thead-item reset" @click="hendleReset"></div>
+                <div class="thead-item timer">{{ this.secInMin(this.time) }}</div>
+              </div>
             </th>
           </tr>
         </thead>
@@ -308,6 +307,11 @@ export default {
   height: 50px;
 }
 
+.thead-wrapper {
+  display: flex;
+  justify-content: space-around;
+}
+
 .thead-item {
   width: 95px;
   height: 40px;
@@ -315,14 +319,13 @@ export default {
   border-top: 4px solid rgb(36, 66, 56);
   border-left: 4px solid rgb(36, 66, 56);
   text-align: end;
-  margin: auto;
+  margin: 5px;
   font-size: 18px;
   padding: 4px 5px;
   position: relative;
+  display: inline-block;
 }
-.counter {
-  padding: 5px 15px;
-}
+
 .counter::before {
   content: '';
   position: absolute;
@@ -424,8 +427,7 @@ export default {
     font-size: 12px;
   }
   .thead-item {
-    font-size: 14px;
-    padding-top: 7px;
+    font-size: 16px;
   }
 }
 </style>
