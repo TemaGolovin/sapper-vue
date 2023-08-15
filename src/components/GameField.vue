@@ -286,6 +286,7 @@ export default {
   --border-cell-top: 3px solid rgb(107, 214, 179);
   --border-cell-left: 3px solid rgb(107, 214, 179);
   --outline-open: 2px solid rgb(36, 66, 56);
+  --font-size: 16px;
 }
 
 .result-game {
@@ -421,10 +422,15 @@ export default {
   background-size: cover;
   background-color: rgb(159, 255, 223);
 }
+@media (max-width: 480px) {
+  .table-field {
+    font-size: var(--font-size);
+  }
+}
 
 @media (max-width: 480px) {
   .table-field {
-    font-size: 12px;
+    font-size: var(--font-size);
   }
   .thead-item {
     font-size: 16px;
