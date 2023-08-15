@@ -76,7 +76,7 @@
                   />
                 </div>
                 <p v-if="this.disabledButtonCell()" class="text-danger">
-                  Количество ячеек должно быть от 8 до 32.
+                  Количество ячеек должно быть от 8 и не больше 25 в ширину, и 32 в высоту.
                 </p>
               </div>
 
@@ -168,6 +168,12 @@ export default {
     };
   },
 
+  mounted() {
+    window.addEventListener('resize', () => {
+      this.setAdaptiv();
+    });
+  },
+
   methods: {
     ...mapActions(['getLeadersFromLocalStore']),
 
@@ -207,7 +213,7 @@ export default {
     },
 
     disabledButtonCell() {
-      const isColumnsNormal = this.castom.columns < 8 || this.castom.columns > 32;
+      const isColumnsNormal = this.castom.columns < 8 || this.castom.columns > 25;
       const isRowNormal = this.castom.rows < 8 || this.castom.rows > 32;
       return isColumnsNormal || isRowNormal;
     },
